@@ -1,0 +1,92 @@
+func (dl *Downloader) Download(ctx context.Context, v *youtube.Video, format *youtube.Format, outputFile string) (string, error) {
+	destFile, err := dl.getOutputFile(v, format, outputFile)
+	if err != nil {
+		return "", err
+	}
+
+	// Create output file
+	out, err := os.Create(destFile)
+	if err != nil {
+		return "", err
+	}
+	defer out.Close()
+
+	dl.logf("Download to file=%s", destFile)
+	return destFile, dl.videoDLWorker(ctx, out, v, format)
+}
+
+func (dl *Downloader) DownloadWithHighQuality(ctx context.Context, outputFile string, v *youtube.Video, quality string) (string, error) {
+	var videoFormat, audioFormat *youtube.Format
+
+	switch quality {
+	case "hd1080":
+		videoFormat = v.Formats.FindByItag(137)
+		audioFormat = v.Formats.FindByItag(140)
+	default:
+		return "", fmt.Errorf("unknown quality: %s", quality)
+	}
+
+	if videoFormat == nil {
+		return "", fmt.Errorf("no format video/mp4 for %s found", quality)
+	}
+	if audioFormat == nil {
+		return "", fmt.Errorf("no format audio/mp4 for %s found", quality)
+	}
+
+	destFile, err := dl.getOutputFile(v, videoFormat, outputFile)
+	if err != nil {
+		return "", err
+	}
+	outputDir := filepath.Dir(destFile)
+
+	// Create temporary video file
+	videoFile, err := ioutil.TempFile(outputDir, "youtube_*.m4v")
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(videoFile.Name())
+
+	// Create temporary audio file
+	audioFile, err := ioutil.TempFile(outputDir, "youtube_*.m4a")
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(audioFile.Name())
+
+	finished := make(chan error, 2)
+
+	go func() {
+		dl.logf("Downloading video file...")
+		err = dl.videoDLWorker(ctx, videoFile, v, videoFormat)
+		finished <- err
+	}()
+
+	go func() {
+		dl.logf("Downloading audio file...")
+		err = dl.videoDLWorker(ctx, audioFile, v, audioFormat)
+		finished <- err
+	}()
+
+	// block for video & audio
+	for i := 0; i < 2; i++ {
+		e := <-finished
+		if e != nil {
+			return "", e
+		}
+	}
+
+	ffmpegVersionCmd := exec.Command("ffmpeg", "-y",
+		"-i", videoFile.Name(),
+		"-i", audioFile.Name(),
+		"-strict",
+		"-2",
+		"-shortest",
+		destFile,
+		"-loglevel", "warning",
+	)
+	ffmpegVersionCmd.Stderr = os.Stderr
+	ffmpegVersionCmd.Stdout = os.Stdout
+	dl.logf("merging video and audio to %s", destFile)
+
+	return destFile, ffmpegVersionCmd.Run()
+}

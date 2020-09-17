@@ -8,7 +8,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strconv"
@@ -30,7 +29,7 @@ var (
 var priorities = []string{
 	// "hd2160",
 	// "hd1440",
-	"hd1080",
+	// "hd1080",
 	"hd720",
 	"large",
 	"medium",
@@ -120,14 +119,14 @@ func download(url string) (string, error) {
 	log.Println("got format:", format.ItagNo, format.Quality, format.MimeType, format.URL)
 
 	log.Println("download to directory", outputDir)
-	if format.Quality == "hd1080" {
-		fmt.Println("check ffmpeg is installed...")
-		ffmpegVersionCmd := exec.Command("ffmpeg", "-version")
-		if err := ffmpegVersionCmd.Run(); err != nil {
-			return "", fmt.Errorf("please check ffmpeg is installed correctly, err: %w", err)
-		}
-		return dl.DownloadWithHighQuality(context.Background(), outputFile, video, format.Quality)
-	}
+	// if format.Quality == "hd1080" {
+	// 	fmt.Println("check ffmpeg is installed...")
+	// 	ffmpegVersionCmd := exec.Command("ffmpeg", "-version")
+	// 	if err := ffmpegVersionCmd.Run(); err != nil {
+	// 		return "", fmt.Errorf("please check ffmpeg is installed correctly, err: %w", err)
+	// 	}
+	// 	return dl.DownloadWithHighQuality(context.Background(), outputFile, video, format.Quality)
+	// }
 	return dl.Download(context.Background(), video, format, outputFile)
 }
 

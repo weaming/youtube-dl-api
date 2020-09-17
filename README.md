@@ -11,4 +11,4 @@ youtube-dl-api -info
 curl 'localhost:8080/download/youtube?url=https://www.youtube.com/watch?v=TYvRLBiN6Vg' -o name.mp4
 ```
 
-Highest quality is `hd1080`, see [main.go](./main.go#L128)
+Highest quality is `hd720`: `hd1080` needs `ffmpeg` to merge vidoe and audio, which consumes too much memory.

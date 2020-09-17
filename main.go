@@ -56,7 +56,7 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.GET("/download/youtube", func(c *gin.Context) {
+	r.GET("/", func(c *gin.Context) {
 		url := c.Query("url")
 		if url == "" {
 			c.JSON(400, gin.H{
@@ -84,6 +84,7 @@ func download(url string) (string, error) {
 		OutputDir: outputDir,
 	}
 	dl.HTTPClient = &http.Client{Transport: httpTransport}
+	// dl.Debug = true
 
 	video, err := dl.GetVideo(url)
 	if err != nil {
@@ -120,7 +121,7 @@ func download(url string) (string, error) {
 
 	log.Println("download to directory", outputDir)
 	if format.Quality == "hd1080" {
-		fmt.Println("check ffmpeg is installed....")
+		fmt.Println("check ffmpeg is installed...")
 		ffmpegVersionCmd := exec.Command("ffmpeg", "-version")
 		if err := ffmpegVersionCmd.Run(); err != nil {
 			return "", fmt.Errorf("please check ffmpeg is installed correctly, err: %w", err)

@@ -15,6 +15,7 @@ func (dl *Downloader) Download(ctx context.Context, v *youtube.Video, format *yo
 	return destFile, dl.videoDLWorker(ctx, out, v, format)
 }
 
+//DownloadWithHighQuality : Starting downloading video with high quality (>720p).
 func (dl *Downloader) DownloadWithHighQuality(ctx context.Context, outputFile string, v *youtube.Video, quality string) (string, error) {
 	var videoFormat, audioFormat *youtube.Format
 
@@ -37,6 +38,11 @@ func (dl *Downloader) DownloadWithHighQuality(ctx context.Context, outputFile st
 	if err != nil {
 		return "", err
 	}
+
+	if _, e := os.Stat(destFile); e == nil {
+		return destFile, nil
+	}
+
 	outputDir := filepath.Dir(destFile)
 
 	// Create temporary video file

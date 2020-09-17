@@ -82,6 +82,11 @@ func (dl *Downloader) DownloadWithHighQuality(ctx context.Context, outputFile st
 	if err != nil {
 		return "", err
 	}
+
+	if _, e := os.Stat(destFile); e == nil {
+		return destFile, nil
+	}
+
 	outputDir := filepath.Dir(destFile)
 
 	// Create temporary video file
